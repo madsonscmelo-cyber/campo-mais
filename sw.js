@@ -1,5 +1,5 @@
 /* Campo+ service worker — v1 */
-const CACHE = 'campomais-v3'
+const CACHE = 'campomais-v4'
 const CORE = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png']
 
 self.addEventListener('install', e => {
