@@ -130,7 +130,7 @@ const COR_CL = {};
 const PALETA = ["#00A443","#004F9F","#F28C00","#8E44AD","#C0392B","#16A085","#2C3E50","#D35400","#27AE60","#7F8C8D","#2980B9","#E74C3C","#F39C12","#1ABC9C","#9B59B6","#34495E","#E67E22","#95A5A6","#2ECC71","#5D6D7E","#AF7AC5","#48C9B0","#F5B041","#76448A","#BA4A00","#1F618D","#7D6608","#186A3B","#78281F","#4A235A","#0B5345","#6E2C00","#17202A","#5B2C6F"];
 const COR_PR = {A:"#C0392B", B:"#F28C00", C:"#7F8C8D"};
 
-// ---------- load dos chunks (Supabase, permanente) ----------
+// ---------- load dos chunks (Supabase Storage, permanente) ----------
 async function carregar(){
  const b64 = window.DADOS_B64.join("");
  const bin = Uint8Array.from(atob(b64), c=>c.charCodeAt(0));
@@ -335,7 +335,7 @@ $("#btnLimpar").addEventListener("click",()=>{location.hash="";location.reload()
 $("#btnFiltros").addEventListener("click",()=>$("#painel").classList.toggle("aberto"));
 
 carregar().then(()=>{lerHash();aplicar();
- setTimeout(()=>{map.invalidateSize();map.fitBounds(boundsSetor.pad(.05));},600);
+ setTimeout(()=>{map.invalidateSize();map.fitBounds(boundsSetor,{animate:false});},900);
 });
 </script>
 </body>
