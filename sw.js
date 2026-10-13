@@ -1,5 +1,5 @@
 /* Campo+ service worker — v1 */
-const CACHE = 'campomais-v10'
+const CACHE = 'campomais-v11'
 const CORE = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png']
 
 self.addEventListener('install', e => {
@@ -32,10 +32,12 @@ self.addEventListener('fetch', e => {
   }
   // navegação: network-first com fallback ao cache (offline shell)
   if (e.request.mode === 'navigate') {
+    // páginas avulsas (ex.: calculadora) têm cache próprio para não sobrescrever o shell do app
+    const chave = url.pathname.endsWith('/calculadora.html') ? url.pathname : '/index.html'
     e.respondWith(
       fetch(e.request)
-        .then(r => { caches.open(CACHE).then(c => c.put('/index.html', r.clone())); return r })
-        .catch(() => caches.match('/index.html'))
+        .then(r => { caches.open(CACHE).then(c => c.put(chave, r.clone())); return r })
+        .catch(() => caches.match(chave))
     )
   }
 })

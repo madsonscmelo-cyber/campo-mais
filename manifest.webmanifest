@@ -49,6 +49,16 @@
           "sizes": "192x192"
         }
       ]
+    },
+    {
+      "name": "Calculadora científica",
+      "url": "./calculadora.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ],
   "prefer_related_applications": false

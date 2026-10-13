@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#00A443" />
+    <meta name="description" content="Campo+ | Calculadora científica" />
+    <link rel="icon" href="./icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <title>Campo+ | Calculadora científica</title>
+    <style>
+      :root {
+        --verde: #00a443;
+        --verde-escuro: #007a32;
+        --bg: #f3f6f4;
+        --painel: #ffffff;
+        --tecla: #eef2ef;
+        --tecla-fn: #e1ebe4;
+        --texto: #14211a;
+        --texto-sec: #5b6b61;
+        --borda: #d5ded8;
+        --erro: #c62828;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1612;
+          --painel: #18221c;
+          --tecla: #223029;
+          --tecla-fn: #1c3326;
+          --texto: #e8f0eb;
+          --texto-sec: #9db0a4;
+          --borda: #2c3b33;
+          --erro: #ef5350;
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        background: var(--bg);
+        color: var(--texto);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        display: flex;
+        justify-content: center;
+        padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+      }
+      .calc { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; }
+      header { display: flex; align-items: center; justify-content: space-between; }
+      header h1 { font-size: 18px; margin: 0; }
+      header h1 span { color: var(--verde); }
+      header a { color: var(--verde); text-decoration: none; font-size: 14px; }
+      .visor {
+        background: var(--painel);
+        border: 1px solid var(--borda);
+        border-radius: 16px;
+        padding: 12px 16px;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .status { display: flex; gap: 8px; font-size: 12px; color: var(--texto-sec); }
+      .status b { color: var(--verde); }
+      #expr {
+        font-size: 20px;
+        color: var(--texto-sec);
+        text-align: right;
+        word-break: break-all;
+        min-height: 28px;
+      }
+      #res {
+        font-size: 36px;
+        font-weight: 600;
+        text-align: right;
+        overflow-x: auto;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      #res.erro { color: var(--erro); font-size: 22px; }
+      .teclado { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+      button {
+        font: inherit;
+        font-size: 17px;
+        border: none;
+        border-radius: 12px;
+        padding: 14px 0;
+        background: var(--tecla);
+        color: var(--texto);
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: filter .1s, transform .05s;
+      }
+      button:hover { filter: brightness(.96); }
+      button:active { transform: scale(.96); }
+      button:focus-visible { outline: 2px solid var(--verde); outline-offset: 2px; }
+      button.fn { background: var(--tecla-fn); font-size: 15px; }
+      button.op { background: var(--verde); color: #fff; font-weight: 600; }
+      button.igual { background: var(--verde-escuro); color: #fff; font-weight: 700; }
+      button.ativo { outline: 2px solid var(--verde); }
+      details {
+        background: var(--painel);
+        border: 1px solid var(--borda);
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      summary { cursor: pointer; color: var(--texto-sec); }
+      #historico { list-style: none; margin: 8px 0 0; padding: 0; max-height: 200px; overflow-y: auto; }
+      #historico li {
+        padding: 6px 0;
+        border-top: 1px solid var(--borda);
+        cursor: pointer;
+        text-align: right;
+      }
+      #historico li small { display: block; color: var(--texto-sec); }
+    </style>
+  </head>
+  <body>
+    <main class="calc">
+      <header>
+        <h1>Campo<span>+</span> · Calculadora</h1>
+        <a href="./">← Voltar ao app</a>
+      </header>
+
+      <section class="visor" aria-live="polite">
+        <div class="status">
+          <span>Ângulo: <b id="modo">DEG</b></span>
+          <span id="memInd"></span>
+          <span id="shiftInd"></span>
+        </div>
+        <div id="expr"></div>
+        <div id="res">0</div>
+      </section>
+
+      <section class="teclado" id="teclado">
+        <button class="fn" data-acao="shift" id="btnShift">2nd</button>
+        <button class="fn" data-acao="modo" id="btnModo">DEG</button>
+        <button class="fn" data-acao="mc">MC</button>
+        <button class="fn" data-acao="mr">MR</button>
+        <button class="fn" data-acao="m+">M+</button>
+
+        <button class="fn" data-f="sin" data-f2="asin">sin</button>
+        <button class="fn" data-f="cos" data-f2="acos">cos</button>
+        <button class="fn" data-f="tan" data-f2="atan">tan</button>
+        <button class="fn" data-f="ln" data-f2="exp">ln</button>
+        <button class="fn" data-f="log" data-f2="10^">log</button>
+
+        <button class="fn" data-ins="²" data-ins2="³">x²</button>
+        <button class="fn" data-ins="^">xʸ</button>
+        <button class="fn" data-f="√" data-f2="∛">√</button>
+        <button class="fn" data-ins="!">n!</button>
+        <button class="fn" data-ins="⁻¹">1/x</button>
+
+        <button class="fn" data-ins="(">(</button>
+        <button class="fn" data-ins=")">)</button>
+        <button class="fn" data-ins="π">π</button>
+        <button class="fn" data-ins="e">e</button>
+        <button class="fn" data-ins="%">%</button>
+
+        <button data-ins="7">7</button>
+        <button data-ins="8">8</button>
+        <button data-ins="9">9</button>
+        <button class="fn" data-acao="del" aria-label="Apagar">⌫</button>
+        <button class="fn" data-acao="ac">AC</button>
+
+        <button data-ins="4">4</button>
+        <button data-ins="5">5</button>
+        <button data-ins="6">6</button>
+        <button class="op" data-ins="×">×</button>
+        <button class="op" data-ins="÷">÷</button>
+
+        <button data-ins="1">1</button>
+        <button data-ins="2">2</button>
+        <button data-ins="3">3</button>
+        <button class="op" data-ins="+">+</button>
+        <button class="op" data-ins="−">−</button>
+
+        <button data-ins="0">0</button>
+        <button data-ins=",">,</button>
+        <button class="fn" data-ins="E" title="Notação científica (×10ⁿ)">EXP</button>
+        <button class="fn" data-acao="ans">Ans</button>
+        <button class="igual" data-acao="igual">=</button>
+      </section>
+
+      <details>
+        <summary>Histórico</summary>
+        <ul id="historico"></ul>
+      </details>
+    </main>
+
+    <script>
+      'use strict'
+
+      // ---------- Avaliador (descida recursiva, sem eval) ----------
+      // Gramática:
+      //   expr    = termo (('+'|'-') termo)*
+      //   termo   = unario (('*'|'/') unario | <multiplicação implícita>)*
+      //   unario  = ('+'|'-') unario | potencia
+      //   potencia= posfixo ('^' unario)?          (associativa à direita)
+      //   posfixo = primario ('!' | '%' | '²' | '³' | '⁻¹')*
+      //   primario= numero | const | func primario | '(' expr ')'
+      const FUNCS = ['asin', 'acos', 'atan', 'sin', 'cos', 'tan', 'ln', 'log', 'exp', '10^', '√', '∛']
+      const CONSTS = { 'π': Math.PI, 'e': Math.E, 'Ans': 0 }
+
+      function tokenizar(s) {
+        const t = []
+        let i = 0
+        s = s.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/,/g, '.')
+        while (i < s.length) {
+          const c = s[i]
+          if (c === ' ') { i++; continue }
+          const num = /^(\d+\.?\d*|\.\d+)(E[+-]?\d+)?/.exec(s.slice(i))
+          if (num) { t.push({ k: 'num', v: parseFloat(num[0]) }); i += num[0].length; continue }
+          const fn = FUNCS.find(f => s.startsWith(f, i))
+          if (fn) { t.push({ k: 'fn', v: fn }); i += fn.length; continue }
+          if (s.startsWith('Ans', i)) { t.push({ k: 'num', v: CONSTS.Ans }); i += 3; continue }
+          if (s.startsWith('⁻¹', i)) { t.push({ k: 'post', v: '⁻¹' }); i += 2; continue }
+          if (c === 'π' || c === 'e') { t.push({ k: 'num', v: CONSTS[c] }); i++; continue }
+          if ('!%²³'.includes(c)) { t.push({ k: 'post', v: c }); i++; continue }
+          if ('+-*/^()'.includes(c)) { t.push({ k: c }); i++; continue }
+          throw new Error('Símbolo inválido: ' + c)
+        }
+        return t
+      }
+
+      function fatorial(n) {
+        if (n < 0 || !Number.isInteger(n)) throw new Error('n! exige inteiro ≥ 0')
+        if (n > 170) return Infinity
+        let r = 1
+        for (let i = 2; i <= n; i++) r *= i
+        return r
+      }
+
+      function avaliar(str, emGraus) {
+        const t = tokenizar(str)
+        let p = 0
+        const ver = () => t[p]
+        const pega = k => {
+          if (!t[p] || t[p].k !== k) throw new Error(k === ')' ? 'Parêntese não fechado' : 'Expressão incompleta')
+          return t[p++]
+        }
+        const ang = x => (emGraus ? (x * Math.PI) / 180 : x)
+        const angInv = x => (emGraus ? (x * 180) / Math.PI : x)
+        // corrige ruído de ponto flutuante em ângulos notáveis (sin 180° = 0, não 1,2e-16)
+        const limpa = x => (Math.abs(x) < 1e-12 ? 0 : x)
+
+        const aplica = (f, x) => {
+          switch (f) {
+            case 'sin': return limpa(Math.sin(ang(x)))
+            case 'cos': return limpa(Math.cos(ang(x)))
+            case 'tan': {
+              if (emGraus && Math.abs(x % 180) === 90) throw new Error('tan indefinida')
+              return limpa(Math.tan(ang(x)))
+            }
+            case 'asin': return angInv(Math.asin(x))
+            case 'acos': return angInv(Math.acos(x))
+            case 'atan': return angInv(Math.atan(x))
+            case 'ln': return Math.log(x)
+            case 'log': return Math.log10(x)
+            case 'exp': return Math.exp(x)
+            case '10^': return Math.pow(10, x)
+            case '√': return Math.sqrt(x)
+            case '∛': return Math.cbrt(x)
+          }
+        }
+
+        // pct: o último termo lido foi "x%" isolado → em a ± x%, vale a × x/100 (200 + 10% = 220)
+        let pct = false
+        function expr() {
+          let v = termo()
+          while (ver() && (ver().k === '+' || ver().k === '-')) {
+            const op = t[p++].k
+            let d = termo()
+            if (pct) d = v * d
+            v = op === '+' ? v + d : v - d
+          }
+          return v
+        }
+        function iniciaPrimario(tk) {
+          return tk && (tk.k === 'num' || tk.k === 'fn' || tk.k === '(')
+        }
+        function termo() {
+          let v = unario()
+          let ehPct = pct
+          for (;;) {
+            const tk = ver()
+            if (tk && (tk.k === '*' || tk.k === '/')) {
+              p++
+              const d = unario()
+              if (tk.k === '/' && d === 0) throw new Error('Divisão por zero')
+              v = tk.k === '*' ? v * d : v / d
+            } else if (iniciaPrimario(tk)) {
+              v *= unario() // 2π, 3(4+1), 2sin(30)
+            } else break
+            ehPct = false
+          }
+          pct = ehPct
+          return v
+        }
+        function unario() {
+          const tk = ver()
+          if (tk && tk.k === '-') { p++; return -unario() }
+          if (tk && tk.k === '+') { p++; return unario() }
+          return potencia()
+        }
+        function potencia() {
+          const b = posfixo()
+          if (ver() && ver().k === '^') {
+            p++
+            const v = Math.pow(b, unario())
+            pct = false
+            return v
+          }
+          return b
+        }
+        function posfixo() {
+          let v = primario()
+          pct = false
+          while (ver() && ver().k === 'post') {
+            const o = t[p++].v
+            pct = o === '%'
+            if (o === '!') v = fatorial(v)
+            else if (o === '%') v = v / 100
+            else if (o === '²') v = v * v
+            else if (o === '³') v = v * v * v
+            else if (o === '⁻¹') {
+              if (v === 0) throw new Error('Divisão por zero')
+              v = 1 / v
+            }
+          }
+          return v
+        }
+        function primario() {
+          const tk = ver()
+          if (!tk) throw new Error('Expressão incompleta')
+          if (tk.k === 'num') { p++; return tk.v }
+          if (tk.k === '(') {
+            p++
+            const v = expr()
+            pega(')')
+            return v
+          }
+          if (tk.k === 'fn') {
+            p++
+            return aplica(tk.v, primario()) // sin(30)² = (sin 30)²
+          }
+          throw new Error('Expressão inválida')
+        }
+
+        if (!t.length) return 0
+        const r = expr()
+        if (p < t.length) throw new Error(t[p].k === ')' ? 'Parêntese sem abertura' : 'Expressão inválida')
+        if (Number.isNaN(r)) throw new Error('Fora do domínio')
+        return r
+      }
+
+      function formatar(x) {
+        if (!Number.isFinite(x)) return x > 0 ? '∞' : '−∞'
+        if (x !== 0 && (Math.abs(x) >= 1e15 || Math.abs(x) < 1e-9)) {
+          return x.toExponential(10).replace(/\.?0+e/, 'e').replace('.', ',').replace('e', ' × 10^').replace('^+', '^')
+        }
+        const r = parseFloat(x.toPrecision(14))
+        return r.toLocaleString('pt-BR', { maximumFractionDigits: 12 })
+      }
+
+      // número → texto aceito pelo tokenizador (vírgula decimal, E maiúsculo)
+      function paraExpr(x) {
+        const t = String(parseFloat(x.toPrecision(14))).replace('e', 'E').replace('.', ',')
+        return x < 0 ? '(' + t + ')' : t
+      }
+
+      // ---------- Estado e UI ----------
+      const $ = id => document.getElementById(id)
+      const elExpr = $('expr'), elRes = $('res')
+      let expressao = ''
+      let emGraus = true
+      let shift = false
+      let memoria = 0
+      let acabouDeCalcular = false
+      let historico = []
+
+      try {
+        const salvo = JSON.parse(localStorage.getItem('campomais-calc') || '{}')
+        if (typeof salvo.memoria === 'number') memoria = salvo.memoria
+        if (typeof salvo.ans === 'number') CONSTS.Ans = salvo.ans
+        if (typeof salvo.emGraus === 'boolean') emGraus = salvo.emGraus
+        if (Array.isArray(salvo.historico)) historico = salvo.historico.slice(0, 30)
+      } catch (_) {}
+
+      function persistir() {
+        try {
+          localStorage.setItem('campomais-calc', JSON.stringify({ memoria, ans: CONSTS.Ans, emGraus, historico }))
+        } catch (_) {}
+      }
+
+      function preview() {
+        if (!expressao) { elRes.textContent = '0'; elRes.classList.remove('erro'); return }
+        try {
+          // fecha parênteses pendentes só para a prévia
+          const abertos = (expressao.match(/\(/g) || []).length - (expressao.match(/\)/g) || []).length
+          const v = avaliar(expressao + ')'.repeat(Math.max(0, abertos)), emGraus)
+          elRes.textContent = formatar(v)
+          elRes.classList.remove('erro')
+        } catch (_) { /* expressão ainda em digitação: mantém o último valor */ }
+      }
+
+      function render() {
+        elExpr.textContent = expressao
+        $('modo').textContent = emGraus ? 'DEG' : 'RAD'
+        $('btnModo').textContent = emGraus ? 'DEG' : 'RAD'
+        $('memInd').textContent = memoria !== 0 ? 'M = ' + formatar(memoria) : ''
+        $('shiftInd').textContent = shift ? '2nd' : ''
+        $('btnShift').classList.toggle('ativo', shift)
+        document.querySelectorAll('[data-f2],[data-ins2]').forEach(b => {
+          if (!b.dataset.rotulo) b.dataset.rotulo = b.textContent
+          const alt = { asin: 'sin⁻¹', acos: 'cos⁻¹', atan: 'tan⁻¹', exp: 'eˣ', '10^': '10ˣ', '∛': '∛', '³': 'x³' }
+          const k = b.dataset.f2 || b.dataset.ins2
+          b.textContent = shift ? alt[k] : b.dataset.rotulo
+        })
+        const ul = $('historico')
+        ul.innerHTML = ''
+        historico.forEach(h => {
+          const li = document.createElement('li')
+          li.innerHTML = '<small></small><span></span>'
+          li.firstChild.textContent = h.e + ' ='
+          li.lastChild.textContent = formatar(h.r)
+          li.onclick = () => { expressao = h.e; acabouDeCalcular = false; render(); preview() }
+          ul.appendChild(li)
+        })
+      }
+
+      function inserir(s) {
+        const ehOperador = ['+', '−', '×', '÷', '^', '%', '!', '²', '³', '⁻¹'].includes(s)
+        if (acabouDeCalcular) {
+          // após "=": operador continua a partir de Ans; número começa conta nova
+          expressao = ehOperador ? 'Ans' : ''
+          acabouDeCalcular = false
+        }
+        expressao += s
+        render()
+        preview()
+      }
+
+      function calcular() {
+        if (!expressao) return
+        try {
+          const abertos = (expressao.match(/\(/g) || []).length - (expressao.match(/\)/g) || []).length
+          const completa = expressao + ')'.repeat(Math.max(0, abertos))
+          const v = avaliar(completa, emGraus)
+          CONSTS.Ans = v
+          historico.unshift({ e: completa, r: v })
+          historico = historico.slice(0, 30)
+          expressao = completa
+          elRes.textContent = formatar(v)
+          elRes.classList.remove('erro')
+          acabouDeCalcular = true
+          persistir()
+        } catch (err) {
+          elRes.textContent = err.message
+          elRes.classList.add('erro')
+        }
+        render()
+      }
+
+      function acao(a) {
+        switch (a) {
+          case 'ac': expressao = ''; acabouDeCalcular = false; break
+          case 'del':
+            if (acabouDeCalcular) { expressao = ''; acabouDeCalcular = false; break }
+            // remove o token inteiro quando for função/constante (sin(, Ans, ⁻¹...)
+            {
+              const m = /(asin\(|acos\(|atan\(|sin\(|cos\(|tan\(|ln\(|log\(|exp\(|10\^\(|√\(|∛\(|Ans|⁻¹)$/.exec(expressao)
+              expressao = expressao.slice(0, m ? -m[0].length : -1)
+            }
+            break
+          case 'igual': calcular(); return
+          case 'modo': emGraus = !emGraus; persistir(); break
+          case 'shift': shift = !shift; render(); return
+          case 'ans': inserir('Ans'); return
+          case 'mc': memoria = 0; persistir(); break
+          case 'mr': inserir(paraExpr(memoria)); return
+          case 'm+':
+            try {
+              const v = expressao ? avaliar(expressao, emGraus) : CONSTS.Ans
+              memoria += v
+              persistir()
+            } catch (_) {}
+            break
+        }
+        render()
+        preview()
+      }
+
+      $('teclado').addEventListener('click', e => {
+        const b = e.target.closest('button')
+        if (!b) return
+        if (b.dataset.acao) return acao(b.dataset.acao)
+        const usaShift = shift && (b.dataset.f2 || b.dataset.ins2)
+        if (b.dataset.f) inserir((usaShift ? b.dataset.f2 : b.dataset.f) + '(')
+        else if (b.dataset.ins) inserir(usaShift ? b.dataset.ins2 : b.dataset.ins)
+        if (usaShift) { shift = false; render() }
+      })
+
+      // Teclado físico
+      document.addEventListener('keydown', e => {
+        if (e.ctrlKey || e.metaKey || e.altKey) return
+        const k = e.key
+        const mapa = { '*': '×', '/': '÷', '-': '−', '.': ',', 'p': 'π' }
+        if (/^[0-9+()^!%e,]$/.test(k)) inserir(k)
+        else if (mapa[k]) inserir(mapa[k])
+        else if (k === 's') inserir('sin(')
+        else if (k === 'c') inserir('cos(')
+        else if (k === 't') inserir('tan(')
+        else if (k === 'l') inserir('ln(')
+        else if (k === 'r') inserir('√(')
+        else if (k === 'Enter' || k === '=') { e.preventDefault(); calcular() }
+        else if (k === 'Backspace') acao('del')
+        else if (k === 'Escape' || k === 'Delete') acao('ac')
+        else return
+        e.preventDefault()
+      })
+
+      render()
+    </script>
+  </body>
+</html>
