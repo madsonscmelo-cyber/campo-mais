@@ -1,0 +1,66 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Excel - Postes Classificados COELBA</title>
+<style>
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;
+display:flex;align-items:center;justify-content:center;min-height:100vh}
+.card{background:#1e293b;border-radius:16px;padding:40px;max-width:520px;width:90%;
+box-shadow:0 20px 60px rgba(0,0,0,.5);text-align:center}
+h1{margin:0 0 8px;font-size:24px;color:#60a5fa}
+.sub{color:#94a3b8;font-size:14px;margin-bottom:24px;line-height:1.6}
+.info{background:#0f172a;border-radius:10px;padding:16px;margin-bottom:24px;font-size:13px;text-align:left;line-height:1.9}
+.info b{color:#60a5fa}
+button{background:#2563eb;color:#fff;border:0;border-radius:10px;padding:16px 32px;
+font-size:16px;font-weight:600;cursor:pointer;width:100%;transition:.2s}
+button:hover{background:#1d4ed8}button:disabled{background:#475569;cursor:not-allowed}
+.barra{height:8px;background:#0f172a;border-radius:4px;overflow:hidden;margin:20px 0}
+.barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2563eb,#60a5fa);transition:width .3s}
+#st{font-size:13px;color:#94a3b8;min-height:20px}
+.ok{color:#4ade80!important}.err{color:#f87171!important}
+</style></head><body>
+<div class="card">
+<h1>Postes Classificados COELBA</h1>
+<div class="sub">Setor Norte - 790.273 postes classificados poste a poste</div>
+<div class="info">
+<b>Conteudo:</b> 790.274 linhas x 20 colunas<br>
+<b>Abas:</b> LEIA-ME | POSTES | RESUMO POR ALIMENTADOR | DISTRIBUICAO<br>
+<b>Tamanho:</b> 91,3 MB (em 33 partes)<br>
+<b>Formato:</b> Excel (.xlsx)
+</div>
+<button id="bt" onclick="baixar()">Baixar Excel completo</button>
+<div class="barra"><i id="pb"></i></div>
+<div id="st">Pronto para baixar</div>
+</div>
+<script>
+var N=33;
+async function baixar(){
+  var bt=document.getElementById('bt'),pb=document.getElementById('pb'),st=document.getElementById('st');
+  bt.disabled=true;
+  try{
+    var pedacos=[];
+    for(var i=1;i<=N;i++){
+      var nome='p'+String(i).padStart(2,'0')+'.b64';
+      st.textContent='Baixando parte '+i+' de '+N+'...';
+      pb.style.width=(i/N*100)+'%';
+      var r=await fetch('xlsx/'+nome+'?t='+Date.now());
+      if(!r.ok) throw new Error('parte '+i+': HTTP '+r.status);
+      var t=(await r.text()).trim();
+      var bin=atob(t), u=new Uint8Array(bin.length);
+      for(var j=0;j<bin.length;j++) u[j]=bin.charCodeAt(j);
+      pedacos.push(u);
+    }
+    st.textContent='Montando arquivo...';
+    var blob=new Blob(pedacos,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='postes_classificados_completo.xlsx';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},2000);
+    st.className='ok'; st.textContent='Pronto! O download comecou (91,3 MB)';
+    pb.style.width='100%';
+  }catch(e){
+    st.className='err'; st.textContent='Erro: '+e.message;
+  }
+  bt.disabled=false;
+}
+</script></body></html>
