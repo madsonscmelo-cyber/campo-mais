@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa de Risco — Setor Norte COELBA</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body{margin:0;font-family:'Segoe UI',system-ui,sans-serif}
+#map{position:fixed;inset:0;background:#1a1a2e}
+.painel{position:fixed;top:12px;left:12px;z-index:1000;background:rgba(255,255,255,.97);border-radius:12px;padding:14px 18px;max-width:330px;box-shadow:0 4px 24px rgba(0,0,0,.4);font-size:13px}
+.painel h1{margin:0 0 2px;font-size:17px;color:#1F4E79}
+.painel .sub{color:#666;font-size:11.5px;margin-bottom:10px}
+.kpi{display:flex;gap:8px;margin:6px 0}
+.kpi div{flex:1;background:#f0f4f8;border-radius:8px;padding:6px 8px;text-align:center}
+.kpi b{display:block;font-size:17px;color:#1F4E79}
+.kpi span{font-size:10px;color:#666}
+.leg{margin-top:10px;font-size:11.5px;line-height:1.6}
+.leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.leg i.l{border-radius:2px;height:4px}
+.filtros{margin-top:10px}
+.filtros button{border:1px solid #ccd;background:#fff;border-radius:14px;padding:3px 10px;margin:2px 3px 2px 0;cursor:pointer;font-size:11px}
+.filtros button.ativo{background:#1F4E79;color:#fff;border-color:#1F4E79}
+.info{position:fixed;bottom:16px;left:12px;z-index:1000;background:rgba(255,255,255,.95);border-radius:10px;padding:8px 14px;font-size:11px;color:#555;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.pop h3{margin:0 0 6px;color:#1F4E79;font-size:14px}
+.pop table{font-size:11.5px;border-collapse:collapse;width:100%}
+.pop td{padding:2px 6px 2px 0;vertical-align:top}
+.pop td:first-child{color:#888;white-space:nowrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;color:#fff;font-size:10.5px;font-weight:600}
+.leaflet-popup-content-wrapper{border-radius:10px}
+#carregando{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2000;background:rgba(31,78,121,.95);color:#fff;padding:14px 26px;border-radius:12px;font-size:14px}
+</style></head><body>
+<div id="map"></div>
+<div id="carregando">⏳ Carregando dados…</div>
+<div class="painel">
+<h1>⚡ Risco de Vegetação — Setor Norte</h1>
+<div class="sub">790.273 postes classificados poste a poste · rede MT colorida por risco</div>
+<div class="kpi"><div><b id="kcl">—</b><span>clusters</span></div><div><b id="kcr" style="color:#c0392b">—</b><span>críticos</span></div><div><b id="kln">—</b><span>trechos MT</span></div></div>
+<div class="leg">
+<i style="background:#c0392b"></i>Crítico (score ≥60) — agir já<br>
+<i style="background:#e67e22"></i>Alto (50–59) — programar<br>
+<i style="background:#f1c40f"></i>Médio (40–49) — plano<br>
+<i style="background:#27ae60"></i>Baixo (&lt;40) — monitorar<br>
+<i class="l" style="background:#c0392b"></i><i class="l" style="background:#e67e22"></i><i class="l" style="background:#f1c40f"></i><i class="l" style="background:#27ae60"></i> rede MT (cor = risco do alimentador)<br>
+<i style="background:#8e44ad;border-radius:2px"></i>Trafo com muitos clientes em risco
+</div>
+<div class="filtros" id="filtros">
+<button class="ativo" onclick="futd('TODAS',this)">Todas</button>
+<button onclick="futd('Jacobina',this)">Jacobina</button>
+<button onclick="futd('Juazeiro',this)">Juazeiro</button>
+<button onclick="futd('Remanso',this)">Remanso</button>
+<button onclick="futd('S. Bonfim',this)">S. Bonfim</button>
+</div>
+</div>
+<div class="info">Círculo = cluster de postes · Linha = trecho MT (cor = risco do alimentador) · Clique para detalhe</div>
+<script src="dados_clusters.js"></script>
+<script src="dados_trafos.js"></script>
+<script src="dados_linhas.js"></script>
+<script>
+const LIN=(function(){
+  const bin=atob(LIN_B64), n=bin.length, u=new Uint8Array(n);
+  for(let i=0;i<n;i++) u[i]=bin.charCodeAt(i);
+  const ds=new DecompressionStream('gzip');
+  return new Blob([u]).stream().pipeThrough(ds);
+})();
+const map=L.map('map',{preferCanvas:true}).setView([-10.6,-41.2],8);
+const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
+const ruas=L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OSM'});
+const topo=L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenTopoMap'});
+sat.addTo(map);
+L.control.layers({'Satélite':sat,'Ruas':ruas,'Topográfico':topo},{},{position:'bottomright'}).addTo(map);
+const gLin=L.layerGroup().addTo(map);
+const gClu=L.layerGroup().addTo(map);
+const gTra=L.layerGroup().addTo(map);
+function cor(s){return s>=60?'#c0392b':s>=50?'#e67e22':s>=40?'#f1c40f':'#27ae60'}
+function raio(n){return Math.max(6,Math.min(34,4*Math.sqrt(n)))}
+function popup(c){return '<div class="pop"><h3>'+c.n+' postes em risco — score '+c.s+'</h3><table>'+
+'<tr><td>Ação</td><td><span class="badge" style="background:'+cor(c.s)+'">'+c.p+'</span></td></tr>'+
+'<tr><td>UTD</td><td>'+c.u+'</td></tr><tr><td>Alimentadores</td><td>'+c.al+'</td></tr>'+
+'<tr><td>Acesso</td><td>'+c.a+'</td></tr><tr><td>Declive</td><td>'+c.d+'</td></tr>'+
+'<tr><td>Roçado</td><td>'+c.r+'</td></tr>'+
+(c.f?'<tr><td>Flags</td><td style="color:#c0392b">'+c.f+'</td></tr>':'')+'</table></div>'}
+let marcadores=[];
+let LINS=[];
+function desenha(utd){
+[gLin,gClu,gTra].forEach(function(g){g.clearLayers()}); marcadores=[];
+let nl=0;
+for(const f of (LINS||[])){
+  L.polyline([[f[4],f[3]],[f[6],f[5]]],{color:f[1],weight:2,opacity:.7}).bindTooltip(f[0]+' — score '+f[2],{sticky:true}).addTo(gLin);
+  nl++;
+}
+for(const c of CL){
+  if(utd!=='TODAS'&&c.u!==utd)continue;
+  const mk=L.circleMarker([c.lat,c.lon],{radius:raio(c.n),color:cor(c.s),weight:1.5,fillColor:cor(c.s),fillOpacity:.55}).bindPopup(popup(c));
+  mk.on('mouseover',function(){mk.setStyle({fillOpacity:.9,weight:2.5})});
+  mk.on('mouseout',function(){mk.setStyle({fillOpacity:.55,weight:1.5})});
+  mk.addTo(gClu); marcadores.push(mk);
+}
+for(const t of TR){
+  L.circleMarker([t.lat,t.lon],{radius:4,color:'#8e44ad',weight:1,fillColor:'#8e44ad',fillOpacity:.85})
+   .bindPopup('<div class="pop"><h3>Trafo '+t.p+'</h3><table><tr><td>Clientes</td><td><b>'+t.u+'</b></td></tr><tr><td>kVA</td><td>'+t.k+'</td></tr><tr><td>Alimentador</td><td>'+t.al+'</td></tr><tr><td>Clientes-hora em risco</td><td><b style="color:#8e44ad">'+t.ch+'</b></td></tr></table></div>').addTo(gTra);
+}
+document.getElementById('kcl').textContent=CL.length.toLocaleString('pt-BR');
+document.getElementById('kcr').textContent=CL.filter(function(c){return c.s>=60}).length;
+document.getElementById('kln').textContent=nl.toLocaleString('pt-BR');
+if(marcadores.length)map.fitBounds(L.featureGroup(marcadores).getBounds().pad(.1));
+document.getElementById('carregando').style.display='none';
+}
+function futd(u,btn){
+document.querySelectorAll('.filtros button').forEach(function(b){b.classList.remove('ativo')});
+btn.classList.add('ativo');
+desenha(u);
+}
+LIN.then(function(rs){return new Response(rs).text()}).then(function(txt){
+  LINS=JSON.parse(txt); desenha('TODAS');
+}).catch(function(e){ console.error(e); desenha('TODAS'); });
+</script></body></html>
