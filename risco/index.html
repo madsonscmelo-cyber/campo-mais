@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mapa de Risco — Setor Norte COELBA</title>
+<title>Mapa de Risco - Setor Norte COELBA</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -30,87 +30,102 @@ body{margin:0;font-family:'Segoe UI',system-ui,sans-serif}
 #carregando{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2000;background:rgba(31,78,121,.95);color:#fff;padding:14px 26px;border-radius:12px;font-size:14px}
 </style></head><body>
 <div id="map"></div>
-<div id="carregando">⏳ Carregando dados…</div>
+<div id="carregando">Carregando...</div>
 <div class="painel">
-<h1>⚡ Risco de Vegetação — Setor Norte</h1>
-<div class="sub">790.273 postes classificados poste a poste · rede MT colorida por risco</div>
-<div class="kpi"><div><b id="kcl">—</b><span>clusters</span></div><div><b id="kcr" style="color:#c0392b">—</b><span>críticos</span></div><div><b id="kln">—</b><span>trechos MT</span></div></div>
+<h1>Risco de Vegetacao - Setor Norte</h1>
+<div class="sub">790.273 postes classificados poste a poste | 4 UTDs | rede MT colorida por risco</div>
+<div class="kpi"><div><b id="kcl">-</b><span>clusters</span></div><div><b id="kcr" style="color:#c0392b">-</b><span>criticos</span></div><div><b id="kln">-</b><span>trechos</span></div></div>
 <div class="leg">
-<i style="background:#c0392b"></i>Crítico (score ≥60) — agir já<br>
-<i style="background:#e67e22"></i>Alto (50–59) — programar<br>
-<i style="background:#f1c40f"></i>Médio (40–49) — plano<br>
-<i style="background:#27ae60"></i>Baixo (&lt;40) — monitorar<br>
-<i class="l" style="background:#c0392b"></i><i class="l" style="background:#e67e22"></i><i class="l" style="background:#f1c40f"></i><i class="l" style="background:#27ae60"></i> rede MT (cor = risco do alimentador)<br>
-<i style="background:#8e44ad;border-radius:2px"></i>Trafo com muitos clientes em risco
+<i style="background:#c0392b"></i>Critico (score &gt;=60) - agir ja<br>
+<i style="background:#e67e22"></i>Alto (50-59) - programar<br>
+<i style="background:#f1c40f"></i>Medio (40-49) - plano<br>
+<i style="background:#27ae60"></i>Baixo (&lt;40) - monitorar<br>
+<i class="l" style="background:#c0392b"></i><i class="l" style="background:#e67e22"></i><i class="l" style="background:#f1c40f"></i><i class="l" style="background:#27ae60"></i> rede MT<br>
+<i style="background:#8e44ad;border-radius:2px"></i>Trafo com clientes em risco
 </div>
-<div class="filtros" id="filtros">
-<button class="ativo" onclick="futd('TODAS',this)">Todas</button>
+<div class="filtros">
+<button class="ativo" onclick="futd('T',this)">Todas</button>
 <button onclick="futd('Jacobina',this)">Jacobina</button>
 <button onclick="futd('Juazeiro',this)">Juazeiro</button>
 <button onclick="futd('Remanso',this)">Remanso</button>
 <button onclick="futd('S. Bonfim',this)">S. Bonfim</button>
 </div>
 </div>
-<div class="info">Círculo = cluster de postes · Linha = trecho MT (cor = risco do alimentador) · Clique para detalhe</div>
-<script src="dados_clusters.js"></script>
-<script src="dados_trafos.js"></script>
-<script src="dados_linhas.js"></script>
+<div class="info">Circulo = cluster (cor=risco, tamanho=postes) | Linha = trecho MT | Clique para detalhe</div>
+<script src="dados_clusters_gz.js"></script>
+<script src="dados_trafos_gz.js"></script>
+<script src="lin35.js"></script>
 <script>
-const LIN=(function(){
-  const bin=atob(LIN_B64), n=bin.length, u=new Uint8Array(n);
-  for(let i=0;i<n;i++) u[i]=bin.charCodeAt(i);
-  const ds=new DecompressionStream('gzip');
-  return new Blob([u]).stream().pipeThrough(ds);
-})();
-const map=L.map('map',{preferCanvas:true}).setView([-10.6,-41.2],8);
-const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'© Esri'});
-const ruas=L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OSM'});
-const topo=L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'© OpenTopoMap'});
+const map = L.map('map',{preferCanvas:true}).setView([-10.6,-41.2],8);
+const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'Esri'});
+const ruas = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png',{maxZoom:18,attribution:'OSM'});
+const topo = L.tileLayer('https://tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'OpenTopoMap'});
 sat.addTo(map);
-L.control.layers({'Satélite':sat,'Ruas':ruas,'Topográfico':topo},{},{position:'bottomright'}).addTo(map);
-const gLin=L.layerGroup().addTo(map);
-const gClu=L.layerGroup().addTo(map);
-const gTra=L.layerGroup().addTo(map);
+L.control.layers({'Satelite':sat,'Ruas':ruas,'Topografico':topo},{},{position:'bottomright'}).addTo(map);
+const gLin=L.layerGroup().addTo(map), gClu=L.layerGroup().addTo(map), gTra=L.layerGroup().addTo(map);
+let CL=[],TR=[],LINS=[],marcadores=[];
 function cor(s){return s>=60?'#c0392b':s>=50?'#e67e22':s>=40?'#f1c40f':'#27ae60'}
 function raio(n){return Math.max(6,Math.min(34,4*Math.sqrt(n)))}
-function popup(c){return '<div class="pop"><h3>'+c.n+' postes em risco — score '+c.s+'</h3><table>'+
-'<tr><td>Ação</td><td><span class="badge" style="background:'+cor(c.s)+'">'+c.p+'</span></td></tr>'+
-'<tr><td>UTD</td><td>'+c.u+'</td></tr><tr><td>Alimentadores</td><td>'+c.al+'</td></tr>'+
-'<tr><td>Acesso</td><td>'+c.a+'</td></tr><tr><td>Declive</td><td>'+c.d+'</td></tr>'+
-'<tr><td>Roçado</td><td>'+c.r+'</td></tr>'+
-(c.f?'<tr><td>Flags</td><td style="color:#c0392b">'+c.f+'</td></tr>':'')+'</table></div>'}
-let marcadores=[];
-let LINS=[];
+function popup(c){
+  return '<div class="pop"><h3>'+c[2]+' postes em risco - score '+c[3]+'</h3><table>'+
+  '<tr><td>Acao</td><td><span class="badge" style="background:'+cor(c[3])+'">'+c[4]+'</span></td></tr>'+
+  '<tr><td>UTD</td><td>'+c[5]+'</td></tr><tr><td>Alimentadores</td><td>'+c[10]+'</td></tr>'+
+  '<tr><td>Acesso</td><td>'+c[6]+'</td></tr><tr><td>Declive</td><td>'+c[7]+'</td></tr>'+
+  '<tr><td>Rocado</td><td>'+c[8]+'</td></tr>'+
+  (c[9]?'<tr><td>Flags</td><td style="color:#c0392b">'+c[9]+'</td></tr>':'')+'</table></div>';
+}
 function desenha(utd){
-[gLin,gClu,gTra].forEach(function(g){g.clearLayers()}); marcadores=[];
-let nl=0;
-for(const f of (LINS||[])){
-  L.polyline([[f[4],f[3]],[f[6],f[5]]],{color:f[1],weight:2,opacity:.7}).bindTooltip(f[0]+' — score '+f[2],{sticky:true}).addTo(gLin);
-  nl++;
-}
-for(const c of CL){
-  if(utd!=='TODAS'&&c.u!==utd)continue;
-  const mk=L.circleMarker([c.lat,c.lon],{radius:raio(c.n),color:cor(c.s),weight:1.5,fillColor:cor(c.s),fillOpacity:.55}).bindPopup(popup(c));
-  mk.on('mouseover',function(){mk.setStyle({fillOpacity:.9,weight:2.5})});
-  mk.on('mouseout',function(){mk.setStyle({fillOpacity:.55,weight:1.5})});
-  mk.addTo(gClu); marcadores.push(mk);
-}
-for(const t of TR){
-  L.circleMarker([t.lat,t.lon],{radius:4,color:'#8e44ad',weight:1,fillColor:'#8e44ad',fillOpacity:.85})
-   .bindPopup('<div class="pop"><h3>Trafo '+t.p+'</h3><table><tr><td>Clientes</td><td><b>'+t.u+'</b></td></tr><tr><td>kVA</td><td>'+t.k+'</td></tr><tr><td>Alimentador</td><td>'+t.al+'</td></tr><tr><td>Clientes-hora em risco</td><td><b style="color:#8e44ad">'+t.ch+'</b></td></tr></table></div>').addTo(gTra);
-}
-document.getElementById('kcl').textContent=CL.length.toLocaleString('pt-BR');
-document.getElementById('kcr').textContent=CL.filter(function(c){return c.s>=60}).length;
-document.getElementById('kln').textContent=nl.toLocaleString('pt-BR');
-if(marcadores.length)map.fitBounds(L.featureGroup(marcadores).getBounds().pad(.1));
-document.getElementById('carregando').style.display='none';
+  [gLin,gClu,gTra].forEach(function(g){g.clearLayers()}); marcadores=[];
+  let nl=0;
+  for(const f of (LINS||[])){
+    L.polyline([[f[3],f[2]],[f[5],f[4]]],{color:cor(f[1]),weight:2,opacity:.75})
+     .bindTooltip(f[0]+' - score '+f[1],{sticky:true}).addTo(gLin);
+    nl++;
+  }
+  for(const c of CL){
+    if(utd!=='T' && c[5]!==utd) continue;
+    const mk = L.circleMarker([c[0],c[1]],{radius:raio(c[2]),color:cor(c[3]),weight:1.5,fillColor:cor(c[3]),fillOpacity:.6}).bindPopup(popup(c));
+    mk.on('mouseover',function(){mk.setStyle({fillOpacity:.95,weight:2.5})});
+    mk.on('mouseout',function(){mk.setStyle({fillOpacity:.6,weight:1.5})});
+    mk.addTo(gClu); marcadores.push(mk);
+  }
+  for(const t of TR){
+    L.circleMarker([t[0],t[1]],{radius:4,color:'#8e44ad',weight:1,fillColor:'#8e44ad',fillOpacity:.85})
+     .bindPopup('<div class="pop"><h3>Trafo '+t[2]+'</h3><table><tr><td>Clientes</td><td><b>'+t[3]+'</b></td></tr><tr><td>kVA</td><td>'+t[4]+'</td></tr><tr><td>Alimentador</td><td>'+t[5]+'</td></tr><tr><td>Clientes-hora em risco</td><td><b style="color:#8e44ad">'+t[6]+'</b></td></tr></table></div>').addTo(gTra);
+  }
+  document.getElementById('kcl').textContent = CL.length;
+  document.getElementById('kcr').textContent = CL.filter(function(c){return c[3]>=60}).length;
+  document.getElementById('kln').textContent = nl;
+  if(marcadores.length) map.fitBounds(L.featureGroup(marcadores).getBounds().pad(.08));
+  document.getElementById('carregando').style.display='none';
 }
 function futd(u,btn){
-document.querySelectorAll('.filtros button').forEach(function(b){b.classList.remove('ativo')});
-btn.classList.add('ativo');
-desenha(u);
+  document.querySelectorAll('.filtros button').forEach(function(b){b.classList.remove('ativo')});
+  btn.classList.add('ativo'); desenha(u);
 }
-LIN.then(function(rs){return new Response(rs).text()}).then(function(txt){
-  LINS=JSON.parse(txt); desenha('TODAS');
-}).catch(function(e){ console.error(e); desenha('TODAS'); });
+function unb64(b64){
+  const bin=atob(b64), n=bin.length, u=new Uint8Array(n);
+  for(let i=0;i<n;i++) u[i]=bin.charCodeAt(i);
+  return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+}
+Promise.all([
+  (typeof CL_B64!=='undefined')?unb64(CL_B64):Promise.resolve('[]'),
+  (typeof LIN_B64!=='undefined')?unb64(LIN_B64):Promise.resolve('[]'),
+  (typeof TR_B64!=='undefined')?unb64(TR_B64):Promise.resolve('[]')
+]).then(function(r){
+  CL=JSON.parse(r[0]).map(function(c){
+    if(Array.isArray(c)) return c;
+    return [c.lat,c.lon,c.n,c.s,c.p,c.u,c.a,c.d,c.r,c.f,c.al];
+  });
+  const ln=JSON.parse(r[1]);
+  LINS=ln.length&&Array.isArray(ln[0])?ln:(ln||[]).map(function(f){
+    return [f.a,f.s,f.q?f.q[1]:f.lat,f.q?f.q[0]:f.lon,f.q?f.q[3]:f.lat,f.q?f.q[2]:f.lon];
+  });
+  const tr=JSON.parse(r[2]);
+  TR=tr.length&&Array.isArray(tr[0])?tr:tr.map(function(t){return [t.lat,t.lon,t.p,t.u,t.k,t.al,t.ch]});
+  desenha('T');
+}).catch(function(e){
+  console.error(e);
+  document.getElementById('carregando').textContent='Erro: '+e.message;
+});
 </script></body></html>
