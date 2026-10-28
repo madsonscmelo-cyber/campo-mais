@@ -1,0 +1,24 @@
+{
+ "arquivos": [
+  {
+   "nome": "topologia.csv",
+   "linhas": 790273,
+   "sha256": "d2fc3ca747fec7120d64b97a4d8f684fab76ef5eb186c487594935d0c0b4d82a"
+  },
+  {
+   "nome": "trafos.csv",
+   "linhas": 41320,
+   "sha256": "7d23617ac2ad3592334f6bf82a82121eee6bb58b1afe27d3f0d18333652b2faf"
+  },
+  {
+   "nome": "ocorrencias.csv",
+   "linhas": 26380,
+   "sha256": "22ffda981b0c91c7daa4dce71719a1b218f4fc59e8980bd9c7efec0636a09832"
+  },
+  {
+   "nome": "compensacoes.csv",
+   "linhas": 136266,
+   "sha256": "34e8a0241b983ad15146688a2c8b2502d71cbb8a870fc2e2e33e95969c592903"
+  }
+ ]
+}
