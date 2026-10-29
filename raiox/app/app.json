@@ -1,0 +1,125 @@
+{
+ "versao": "2026-10-28-1",
+ "titulo": "Setor Norte",
+ "padrao": "REMANSO",
+ "utds": [
+  {
+   "id": "REMANSO",
+   "nome": "Remanso",
+   "postes": [
+    {
+     "arquivo": "postes_REMANSO_p01.csv",
+     "bytes": 10449314,
+     "linhas": 115298,
+     "sha256": "c9246e682c401ac41bd166c91fe35d5af84f17c5c79ba342cf036ede43efaff8"
+    }
+   ],
+   "ocorrencias": [
+    {
+     "arquivo": "ocorrencias_REMANSO_p01.csv",
+     "bytes": 211192,
+     "linhas": 2872,
+     "sha256": "5b733e0c6c2771ca43f194de24145288dc9f7d92ff0c96d34c5e201c11e77c63"
+    }
+   ],
+   "compensacoes": [
+    {
+     "arquivo": "compensacoes_REMANSO_p01.csv",
+     "bytes": 1019160,
+     "linhas": 27496,
+     "sha256": "da757c295fe595b9f13c397544a2a2e4700e7e2cedc5b90833b56710c08f1b90"
+    }
+   ]
+  },
+  {
+   "id": "JUAZEIRO",
+   "nome": "Juazeiro",
+   "postes": [
+    {
+     "arquivo": "postes_JUAZEIRO_p01.csv",
+     "bytes": 14054266,
+     "linhas": 151542,
+     "sha256": "d5db10b8c875e8129064753d27f5b8cc5c4350509e65c0ed0e56452fbd4b68eb"
+    }
+   ],
+   "ocorrencias": [
+    {
+     "arquivo": "ocorrencias_JUAZEIRO_p01.csv",
+     "bytes": 487801,
+     "linhas": 6789,
+     "sha256": "f06b49e2f402ebdc5e50f248df6c532d5a5777d0f5e05805322b759126cd5f5d"
+    }
+   ],
+   "compensacoes": [
+    {
+     "arquivo": "compensacoes_JUAZEIRO_p01.csv",
+     "bytes": 1195868,
+     "linhas": 32522,
+     "sha256": "d2b3bca4abb3f2b345231d680ec664c91ee289216dfa0083e42780214c0ea145"
+    }
+   ]
+  },
+  {
+   "id": "S_BONFIM",
+   "nome": "S. Bonfim",
+   "postes": [
+    {
+     "arquivo": "postes_S_BONFIM_p01.csv",
+     "bytes": 19563820,
+     "linhas": 204824,
+     "sha256": "8014dd3d6604c2ba1d29765f513c8ccc99ad8d40e4f994d1ffdc6d690acc7afa"
+    }
+   ],
+   "ocorrencias": [
+    {
+     "arquivo": "ocorrencias_S_BONFIM_p01.csv",
+     "bytes": 518839,
+     "linhas": 7314,
+     "sha256": "a37a87ad73fc95ca4ab8a339f1b911ddafaffbc3d0ffcb5ed44944c8b077e827"
+    }
+   ],
+   "compensacoes": [
+    {
+     "arquivo": "compensacoes_S_BONFIM_p01.csv",
+     "bytes": 883665,
+     "linhas": 24287,
+     "sha256": "73db311d2b6a8b415a644dec5c0a9bcfb83b57e47ddaf0a42623be7d523c5cda"
+    }
+   ]
+  },
+  {
+   "id": "JACOBINA",
+   "nome": "Jacobina",
+   "postes": [
+    {
+     "arquivo": "postes_JACOBINA_p01.csv",
+     "bytes": 20971614,
+     "linhas": 220886,
+     "sha256": "f8828e61bff3da35c2cdf3e3ea7efac2140f00788dac52b310cae47e7ed21f35"
+    },
+    {
+     "arquivo": "postes_JACOBINA_p02.csv",
+     "bytes": 8622693,
+     "linhas": 90706,
+     "sha256": "44e74ca66a59ac523c529fd63d08e5fad114daa94edad3f900f3a6bbde8c8374"
+    }
+   ],
+   "ocorrencias": [
+    {
+     "arquivo": "ocorrencias_JACOBINA_p01.csv",
+     "bytes": 598947,
+     "linhas": 8164,
+     "sha256": "22652baf80dd23fe08a7c46bc02880f43d2a70fa1e94f622b5b1fe738db3f68a"
+    }
+   ],
+   "compensacoes": [
+    {
+     "arquivo": "compensacoes_JACOBINA_p01.csv",
+     "bytes": 1898268,
+     "linhas": 51905,
+     "sha256": "cf9e3e4add2e9f584c8eb1c6aaede3bd579fce995afd7ae82d4840dda54d19be"
+    }
+   ]
+  }
+ ]
+}
